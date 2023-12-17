@@ -123,28 +123,29 @@ public class ProcessBuilderLearnTest {
 
 	@Test
 	void processOnExitTest() throws InterruptedException {
-		AtomicInteger sevenCount = new AtomicInteger(0);
+		AtomicInteger multipliesOfSevenCount = new AtomicInteger(0);
 		Mono.fromCallable(printProcessFrom1To(100)::start).flatMap(process -> {
 			process.onExit().thenAccept((c) -> {
-				System.out.println("프로세스 종료 thenAccept 실행");
+				log.info("프로세스가 종료되어 thenAccept 실행");
 			});
-
-			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			String line;
-			while (true) {
-				try {
-					line = reader.readLine();
-					if (line.contains("7")) {
-						sevenCount.getAndIncrement();
+			try {
+				log.info("프로세스 출력 읽기 시작");
+				InputStream inputStream = process.getInputStream();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+				String line;
+				while ((line = reader.readLine()) != null) {
+					if(Integer.parseInt(line) % 7 == 0){
+						multipliesOfSevenCount.incrementAndGet();
 					}
-				} catch (IOException e) {
-					System.out.println("e = " + e);
 				}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		}).subscribeOn(Schedulers.boundedElastic()).subscribe();
-
+			return Mono.just(multipliesOfSevenCount.get());
+		}).log().subscribeOn(Schedulers.boundedElastic()).subscribe();
 		Thread.sleep(1000L);
-		log.info("sevenCount.get() : " + sevenCount.get());
+		log.info("sevenCount.get() : " + multipliesOfSevenCount.get());
+		assertThat(multipliesOfSevenCount.get()).isEqualTo(100 / 7);
 	}
 
 	@Test
@@ -174,6 +175,7 @@ public class ProcessBuilderLearnTest {
 			commands.append("echo ").append(i).append('\n');
 		}
 		processBuilder.command("powershell.exe", commands.toString());
+		log.info("프로세스빌더 생성");
 		return processBuilder;
 	}
 }
