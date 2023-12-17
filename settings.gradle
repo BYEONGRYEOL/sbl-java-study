@@ -1,0 +1,6 @@
+rootProject.name = 'sbl-java-study'
+include 'jpa-relation-study'
+include 'jpa-advance-study'
+include 'webflux'
+include 'jackson-study'
+
