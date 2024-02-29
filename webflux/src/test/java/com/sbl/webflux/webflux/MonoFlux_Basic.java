@@ -3,6 +3,7 @@ package com.sbl.webflux.webflux;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,6 +14,7 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
@@ -25,24 +27,40 @@ public class MonoFlux_Basic {
 	// 따라서 Mono도 아이템을 produce할 수 있고, subscriber가 subscribe하면 Emit을 할 수 있다는 것은 동일합니다.
 
 	@Test
-	void MonoClassNameLearnTest() {
-		Mono<String> noData = Mono.empty();
-		Mono<String> data = Mono.just("hello-mono");
-		System.out.println("Mono.empty()의 클래스명 : " + noData.getClass().getName());
-		System.out.println("Mono.just(value)의 클래스명 : " + data.getClass().getName());
-		System.out.println("Mono.empty().subscribe()의 클래스명 : " + noData.subscribe().getClass().getName());
-		System.out.println("Mono.just(value).subscribe() 의 클래스명 : " + noData.subscribe().getClass().getName());
+	void MonoClassNames() {
+		Mono<String> emptyMono = Mono.empty();
+		Mono<String> justMono = Mono.just("hello-mono");
+		Disposable subscriber = emptyMono.subscribe();
+		assertThat(emptyMono.getClass().getName()).isEqualTo("reactor.core.publisher.MonoEmpty");
+		assertThat(justMono.getClass().getName()).isEqualTo("reactor.core.publisher.MonoJust");
+		assertThat(subscriber.getClass().getName()).isEqualTo("reactor.core.publisher.LambdaMonoSubscriber");
 	}
+
 	@Test
-	void stream(){
+	void FluxClassNames() {
+		Flux<String> emptyFlux = Flux.empty();
+		Flux<String> arrayFlux = Flux.just("hello-flux", "hi-flux");
+		Flux<String> streamFlux = Flux.fromStream(Stream.of("A", "B", "C", "D"));
+		Flux<String> iterableFlux = Flux.fromIterable(Collections.emptyList());
+		Disposable subscriber = emptyFlux.subscribe();
+		assertThat(emptyFlux.getClass().getName()).isEqualTo("reactor.core.publisher.FluxEmpty");
+		assertThat(arrayFlux.getClass().getName()).isEqualTo("reactor.core.publisher.FluxArray");
+		assertThat(streamFlux.getClass().getName()).isEqualTo("reactor.core.publisher.FluxStream");
+		assertThat(iterableFlux.getClass().getName()).isEqualTo("reactor.core.publisher.FluxIterable");
+		assertThat(subscriber.getClass().getName()).isEqualTo("reactor.core.publisher.LambdaSubscriber");
+	}
+
+	@Test
+	void stream() {
 		String toString = "문자열로 매핑하기";
-		Stream.of(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22)
-			.filter(i-> i%2==0)
-			.map(i-> toString+i )
+		Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22)
+			.filter(i -> i % 2 == 0)
+			.map(i -> toString + i)
 			.filter(s -> s.length() == toString.length() + 2)
-			.sorted((s1,s2) ->s2.compareTo(s1))
+			.sorted((s1, s2) -> s2.compareTo(s1))
 			.forEach(System.out::println);
 	}
+
 	@Test
 	void subscribeMonoLearnTest1() {
 		Mono<Integer> monoInt = Mono.just(1);
@@ -340,25 +358,26 @@ public class MonoFlux_Basic {
 	 */
 
 	@Test
-	void doAfterTerminate(){
+	void doAfterTerminate() {
 		AtomicBoolean isTerminated = new AtomicBoolean(false);
-	    // given
-		Flux<Object> flux = Flux.generate(()->1, (state, sink) -> {
+		// given
+		Flux<Object> flux = Flux.generate(() -> 1, (state, sink) -> {
 			sink.next(state);
-			if(state == 10){
+			if (state == 10) {
 				sink.complete();
 			}
-			return state+1;
+			return state + 1;
 		}).filter(i -> (int)i > 20).doOnTerminate(() -> isTerminated.set(true));
 
-	    // when
+		// when
 		assert !isTerminated.get(); // 현재는 isTerminated가 false
 		StepVerifier.create(flux).verifyComplete(); // flux를 subscribe해도 filter때문에 아무 값을 가지지 않는다.
 
-	    // then
+		// then
 		assert isTerminated.get(); // 하지만 doOnTerminate는 실행되었음
 
 	}
+
 	public static class CharacterCreator {
 		public Consumer<List<Character>> consumer;
 

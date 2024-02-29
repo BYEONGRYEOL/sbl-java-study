@@ -12,7 +12,16 @@
             <option value="$PROJECT_DIR$/jackson-study" />
             <option value="$PROJECT_DIR$/jpa-advance-study" />
             <option value="$PROJECT_DIR$/jpa-relation-study" />
+            <option value="$PROJECT_DIR$/unlabeled" />
             <option value="$PROJECT_DIR$/webflux" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/common-utils" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/common-utils" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -1,14 +1,13 @@
 package com.sparta.jpaadvance.relation;
 
-import com.sparta.jpaadvance.entity.OneToOne.TwoWay.FoodOTOTwoWayOwner;
-import com.sparta.jpaadvance.entity.OneToOne.TwoWay.UserOTOTwoWayDependent;
-import com.sparta.jpaadvance.repository.FoodOTOTwoWayOwnerRepository;
-import com.sparta.jpaadvance.repository.UserOTOTwoWayDependentRepository;
+import com.sparta.jpaadvance.entity.OwnerOTOTwoWay;
+import com.sparta.jpaadvance.entity.D_OTOTwoWay;
+import com.sparta.jpaadvance.repository.Owner_OTOTwoWayRepository;
+import com.sparta.jpaadvance.repository.Dependent_OTOTwoWayRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,18 +19,18 @@ public class OneToOneTwoWayTest {
     private final String USER_NAME = "username";
 
     @Autowired
-    FoodOTOTwoWayOwnerRepository foodRepository;
+    Owner_OTOTwoWayRepository foodRepository;
     @Autowired
-    UserOTOTwoWayDependentRepository userRepository;
+    Dependent_OTOTwoWayRepository userRepository;
 
     @Test
     @Rollback(value = false)
     @DisplayName("1대1 양방향 테스트 : 주인이 아닌 엔티티에서 저장시 외래키 저장 안됨")
     void savedByDependentOnlyTest() {
-        FoodOTOTwoWayOwner food = getFood();
+        OwnerOTOTwoWay food = getFood();
 
         // 외래 키의 주인이 아닌 User 에서 Food 를 저장해보겠습니다.
-        UserOTOTwoWayDependent user = getUser();
+        D_OTOTwoWay user = getUser();
         user.setFood(food);
 
         userRepository.save(user);
@@ -44,9 +43,9 @@ public class OneToOneTwoWayTest {
     @Rollback(value = false)
     @DisplayName("1대1 양방향 테스트 : 외래 키성공")
     void savedByDependentAndOwnerTest() {
-        FoodOTOTwoWayOwner food = getFood();
+        OwnerOTOTwoWay food = getFood();
 
-        UserOTOTwoWayDependent user = getUser();
+        D_OTOTwoWay user = getUser();
         // 직접 작성한 addFood 함수
         user.addFood(food);
 
@@ -58,8 +57,8 @@ public class OneToOneTwoWayTest {
     @Rollback(value = false)
     @DisplayName("1대1 양방향 테스트 주인이 dependent를 저장")
     void savedByOwnerTest() {
-        FoodOTOTwoWayOwner food = getFood();
-        UserOTOTwoWayDependent user = getUser();
+        OwnerOTOTwoWay food = getFood();
+        D_OTOTwoWay user = getUser();
 
         food.setUser(user); // 외래 키(연관 관계) 설정
 
@@ -72,7 +71,7 @@ public class OneToOneTwoWayTest {
     @Test
     @DisplayName("1대1 조회 : Owner 기준 Dependent 정보 조회")
     void findDependentByOwnerTest() {
-        FoodOTOTwoWayOwner food = foodRepository.findById(1L).orElseThrow(NullPointerException::new);
+        OwnerOTOTwoWay food = foodRepository.findById(1L).orElseThrow(NullPointerException::new);
         // 음식 정보 조회
         System.out.println("food.getName() = " + food.getName());
 
@@ -83,19 +82,19 @@ public class OneToOneTwoWayTest {
     @Test
     @DisplayName("1대1 조회 : dependent 기준 owner 정보 조회")
     void findOwnerByDependentTest() {
-        UserOTOTwoWayDependent user = userRepository.findById(1L).orElseThrow(NullPointerException::new);
+        D_OTOTwoWay user = userRepository.findById(1L).orElseThrow(NullPointerException::new);
         // 고객 정보 조회
         System.out.println("user.getName() = " + user.getName());
 
         // 해당 고객이 주문한 음식 정보 조회
-        FoodOTOTwoWayOwner food = user.getFood();
+        OwnerOTOTwoWay food = user.getFood();
         System.out.println("food.getName() = " + food.getName());
         System.out.println("food.getPrice() = " + food.getPrice());
     }
-    FoodOTOTwoWayOwner getFood() {
-        return new FoodOTOTwoWayOwner(FOOD_NAME, 100);
+    OwnerOTOTwoWay getFood() {
+        return new OwnerOTOTwoWay(FOOD_NAME, 100);
     }
-    UserOTOTwoWayDependent getUser(){
-        return new UserOTOTwoWayDependent(USER_NAME);
+    D_OTOTwoWay getUser(){
+        return new D_OTOTwoWay(USER_NAME);
     }
 }

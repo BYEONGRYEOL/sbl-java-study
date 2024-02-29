@@ -217,162 +217,83 @@ public class PubSubTest {
 		Thread.sleep(1000L);
 	}
 
+	/**
+	 * @Author 서병렬
+	 * @Description subscribeOn, publishOn을 혼합해서 사용한 예제 개념은 이전 테스트와 같음
+	 * @ResultAnalysis chain을 거슬러 올라가며 Map.2 의 생성작업 이후는 스케쥴러B에게 역임
+	 * Map.1 의 생성요청작업 부터 스케쥴러A에게 역임
+	 * 따라서 TestWorker -> 스케쥴러A -> 스케쥴러B 순으로 생성 요청 -> 생성 작업을 수행한다.
+	 */
 	@Test
 	void publishAfterSubscribe() {
-
-		//chain의 뒤에서 부터 이해하기,
-		// schedulerB가 map3, subscribe 작업을 맡기로 했다.
-		// schedulerA가 앞뒤 체인들중 schedule 되지 않은 task들 모두룰 가져간다.
-		/**
-		 * map1 : a
-		 * map2 : a
-		 * map3 : b
-		 * subscribe : b
-		 */
-
-		// 혼합해서 사용하면 publishOn에 의해 분리된 스케쥴러가 먼저 쓰레드를 생성한다.
-
-		Flux.range(1, 5).map(i -> {
-			System.out.println("쓰레드 : " + Thread.currentThread().getName() + " " + i);
-			return i * 10;
-		}).subscribeOn(schedulerA).map(i -> {
-			System.out.println("쓰레드 : " + Thread.currentThread().getName() + " " + i);
-			return i * 10;
-		}).publishOn(schedulerB).map(i -> {
-			System.out.println("쓰레드 : " + Thread.currentThread().getName() + " " + i);
-			return i * 10;
-		}).subscribe(i -> {
-			System.out.println("쓰레드 : " + Thread.currentThread().getName() + " " + i);
-		});
+		Flux.range(1, 5)
+			.log()
+			.map(i -> i * 10)
+			.subscribeOn(schedulerA)
+			.log()
+			.map(i -> i * 10)
+			.publishOn(schedulerB)
+			.log()
+			.map(i -> i * 10)
+			.subscribe();
 	}
 
+	/**
+	 * @Author 서병렬
+	 * @Description Map이 중첩된 구조일때 Inner chain 에서 publish할 스케쥴러를 역임하는 경우
+	 * 의도적으로 외부, 내부 스케쥴러를 동일하게 boundedElastic으로 설정함
+	 * 만약 이해가 잘 되지 않는다면 다음 테스트를 먼저 보길 권장
+	 * @ResultAnalysis Map.2 Map.1의 생성요청 작업, Map.1의 생성 작업까지는 TestWorker가 작업,
+	 * Map.2 생성작업 부터 Inner Map.1까지는 첫번째로 실행된 publishOn에 의해 스케쥴링된 쓰레드가 작업한다.
+	 * Inner Map.1 생성작업 이후에 publishOn(Schedulers.boundedElastic()) 라인을 만나면서 새로운 쓰레드에게
+	 * 이후의 작업(Inner Map.2 생성작업)을 역임함
+	 */
 	@Test
 	void publishOuterPublishInnerWithBondedElasticScheduler() {
-		// inner Flux에서 publish한 구역이 nestes map 2 이후이므로 nested map 1 에는 스케쥴러가 할당되지 않았음
-		// outer Flux에서 map 2 이후로 publish 하기로했으므로, outer flux map 2 & inner flux nested map 1 만큼을 역임한다.
-		// 스케쥴러를 부여받지 못한 map 1 task는 main thread가 수행한다.
-		Flux.range(1, 3).map(i -> {
-			System.out.println("1st map():" + Thread.currentThread().getName() + " " + i);
-			return i * 10;
-		}).publishOn(Schedulers.boundedElastic()).map(i -> {
-			System.out.println("2nd map():" + Thread.currentThread().getName() + " " + i);
-			return Flux.fromIterable(Arrays.asList(1, 2)).map(j -> {
-				System.out.println("nested 1st map():" + Thread.currentThread().getName() + " " + i + " " + j);
-				return j * 10;
-			}).publishOn(Schedulers.boundedElastic()).map(j -> {
-				System.out.println("nested 2nd map():" + Thread.currentThread().getName() + " " + i + " " + j);
-				return j * 10;
-			}).subscribe(j -> {
-				System.out.println("subscribe():" + Thread.currentThread().getName() + " " + i + " " + j);
-			});
-		}).subscribe();
-
-		/**
-		 1st map():Test worker 1
-		 1st map():Test worker 2
-		 1st map():Test worker 3
-
-		 publishOn에 의해 스케쥴링, 첫번째 쓰레드가 작업을 시작한다.
-		 2nd map():boundedElastic-1 10
-		 2nd map():boundedElastic-1 20
-		 2nd map():boundedElastic-1 30
-		 nested 1st map():boundedElastic-1 10 1
-		 nested 1st map():boundedElastic-1 10 2
-
-		 bondedElastic 스케쥴러에게 다시 publish, 두번째 쓰레드가 작업을 시작한다.
-
-		 nested 2nd map():boundedElastic-2 10 10
-		 nested 2nd map():boundedElastic-2 10 20
-		 subscribe():boundedElastic-2 10 100
-		 subscribe():boundedElastic-2 10 200
-
-		 nested 1st map():boundedElastic-1 20 1
-		 nested 1st map():boundedElastic-1 20 2
-
-		 boundedElastic 스케쥴러에게 다시 publish, 세번째 쓰레드가 작업을 시작한다.
-
-		 nested 2nd map():boundedElastic-3 20 10
-		 nested 2nd map():boundedElastic-3 20 20
-		 subscribe():boundedElastic-3 20 100
-		 subscribe():boundedElastic-3 20 200
-
-
-		 nested 1st map():boundedElastic-1 30 1
-		 nested 1st map():boundedElastic-1 30 2
-
-		 boundedElastic 스케쥴러에게 다시 publish, 네번째 쓰레드가 작업을 시작한다.
-
-		 nested 2nd map():boundedElastic-4 30 10
-		 nested 2nd map():boundedElastic-4 30 20
-		 subscribe():boundedElastic-4 30 100
-		 subscribe():boundedElastic-4 30 200
-		 */
+		Flux.range(1, 2)
+			.map(i -> i * 10)
+			.log()
+			.publishOn(Schedulers.boundedElastic())
+			.map(i -> Flux.fromIterable(Arrays.asList(1, 2))
+				.map(j -> String.format("i : %d, j : %d", i, j))
+				.log()
+				.publishOn(Schedulers.boundedElastic())
+				.map(j -> j + " 문자열 매핑")
+				.log()
+				.subscribe()
+			)
+			.log()
+			.subscribe();
 	}
 
+	/**
+	 * @Author 서병렬
+	 * @Description Map이 중첩된 구조일때 Inner chain 에서 publish할 스케쥴러를 역임하는 경우
+	 * 의도적으로 외부, 내부 스케쥴러를 동일하게 boundedElastic으로 설정함
+	 * 만약 이해가 잘 되지 않는다면 다음 테스트를 먼저 보길 권장
+	 * @ResultAnalysis Map.2 Map.1의 생성요청 작업, Map.1의 생성 작업까지는 TestWorker가 작업,
+	 * Map.2 생성작업 부터 Inner Map.1까지는 첫번째로 실행된 publishOn에 의해 스케쥴링된 쓰레드가 작업한다.
+	 * Inner Map.1 생성작업 이후에 publishOn(Schedulers.boundedElastic()) 라인을 만나면서 새로운 쓰레드에게
+	 * 이후의 작업(Inner Map.2 생성작업)을 역임함
+	 */
 	@Test
 	void publishOuterPublishInnerWithCustomScheduler() {
-
-		// nested 1st map 이후에 publishOn(schedulerB) 코드에 의해서 각 작업이 다른 쓰레드에게 역임되고있음
-
-		// 내부적으로는 schedulerB 가 nested map2, nested subscribe 작업을 맡기로 하고 거슬러 올라가서
-		// map2, nested map1 을 schedulerA가 맡게된다. 따라서 schedulerA 가 map2 부분에서  Flux.map 작업을 return되는 Flux.map 3개에 대해서 수행해야하므로
-		// 각 3개의 task를 아까 역임하기로한 schedulerB에게 전달한다. 따라서 schedulerB는 3개의 쓰레드를 운용하게됨
-		Flux.range(1, 3).map(i -> {
-			System.out.println("1st map():" + Thread.currentThread().getName() + " " + i);
-			return i * 10;
-		}).publishOn(schedulerA).map(i -> {
-			System.out.println("2nd map():" + Thread.currentThread().getName() + " " + i);
-			return Flux.fromIterable(Arrays.asList(1, 2)).map(j -> {
-				System.out.println("nested 1st map():" + Thread.currentThread().getName() + " " + i + " " + j);
-				return j * 10;
-			}).publishOn(schedulerB).map(j -> {
-				System.out.println("nested 2nd map():" + Thread.currentThread().getName() + " " + i + " " + j);
-				return j * 10;
-			}).subscribe(j -> {
-				System.out.println("subscribe():" + Thread.currentThread().getName() + " " + i + " " + j);
-			});
-		}).subscribe();
-
-		/**
-		 1st map():Test worker 1
-		 1st map():Test worker 2
-		 1st map():Test worker 3
-
-		 publishOn에 의해 스케쥴링, 첫번째 쓰레드가 작업을 시작한다.
-		 2nd map():boundedElastic-1 10
-		 2nd map():boundedElastic-1 20
-		 2nd map():boundedElastic-1 30
-		 nested 1st map():boundedElastic-1 10 1
-		 nested 1st map():boundedElastic-1 10 2
-
-		 bondedElastic 스케쥴러에게 다시 publish, 두번째 쓰레드가 작업을 시작한다.
-
-		 nested 2nd map():boundedElastic-2 10 10
-		 nested 2nd map():boundedElastic-2 10 20
-		 subscribe():boundedElastic-2 10 100
-		 subscribe():boundedElastic-2 10 200
-
-		 nested 1st map():boundedElastic-1 20 1
-		 nested 1st map():boundedElastic-1 20 2
-
-		 boundedElastic 스케쥴러에게 다시 publish, 세번째 쓰레드가 작업을 시작한다.
-
-		 nested 2nd map():boundedElastic-3 20 10
-		 nested 2nd map():boundedElastic-3 20 20
-		 subscribe():boundedElastic-3 20 100
-		 subscribe():boundedElastic-3 20 200
-
-
-		 nested 1st map():boundedElastic-1 30 1
-		 nested 1st map():boundedElastic-1 30 2
-
-		 boundedElastic 스케쥴러에게 다시 publish, 네번째 쓰레드가 작업을 시작한다.
-
-		 nested 2nd map():boundedElastic-4 30 10
-		 nested 2nd map():boundedElastic-4 30 20
-		 subscribe():boundedElastic-4 30 100
-		 subscribe():boundedElastic-4 30 200
-		 */
+		SchedulerA schedulerA = new SchedulerA();
+		SchedulerB schedulerB = new SchedulerB();
+		Flux.range(1, 2)
+			.map(i -> i * 10)
+			.log()
+			.publishOn(schedulerA)
+			.map(i -> Flux.fromIterable(Arrays.asList(1, 2))
+				.map(j -> String.format("i : %d, j : %d", i, j))
+				.log()
+				.publishOn(schedulerB)
+				.map(j -> j + " 문자열 매핑")
+				.log()
+				.subscribe()
+			)
+			.log()
+			.subscribe();
 	}
 
 	@Test
@@ -674,7 +595,7 @@ public class PubSubTest {
 		@Override
 		public Disposable schedule(Runnable task) {
 			System.out.println("스케쥴러A 클래스의 schedule 함수 실행 ");
-			Thread thread = new Thread(task, "스케쥴러A 에 의해 생성된 " + atomicInteger.getAndIncrement() + " 번째 쓰레드");
+			Thread thread = new Thread(task);
 			thread.start();
 			return () -> {
 				thread.interrupt();
@@ -692,9 +613,7 @@ public class PubSubTest {
 				log.info("스케쥴러A의 CustomWorker 클래스에서  schedule 함수 실행 ");
 				Thread thread = new Thread(task, "스케쥴러A 에 의해 생성된 " + atomicInteger.getAndIncrement() + " 번째 쓰레드");
 				thread.start();
-				return () -> {
-					thread.interrupt();
-				};
+				return thread::interrupt;
 			}
 
 			@Override
@@ -711,7 +630,7 @@ public class PubSubTest {
 		@Override
 		public Disposable schedule(Runnable task) {
 			System.out.println("스케쥴러B 클래스의 schedule 함수 실행 " + atomicInteger.get() + " 번째로 schedule 함수 호출");
-			Thread thread = new Thread(task, "스케쥴러B 에 의해 생성된 " + atomicInteger.getAndIncrement() + " 번째 쓰레드");
+			Thread thread = new Thread(task);
 			thread.start();
 			return () -> {
 				thread.interrupt();

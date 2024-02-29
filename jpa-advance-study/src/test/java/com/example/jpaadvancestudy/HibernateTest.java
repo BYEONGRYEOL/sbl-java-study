@@ -8,6 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.orm.jpa.JpaSystemException;
 
+import com.example.jpaadvancestudy.entity.MyEntity;
+import com.example.jpaadvancestudy.entity.NoGenerateIdEntity;
+import com.example.jpaadvancestudy.repository.MyEntityRepository;
+import com.example.jpaadvancestudy.repository.NoGenerateIdEntityRepository;
+
 import jakarta.persistence.EntityManager;
 
 @DataJpaTest

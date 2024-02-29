@@ -37,6 +37,18 @@ subprojects {
     tasks.named('test') {
         useJUnitPlatform()
     }
+    tasks.named('bootJar') {
+        enabled = false
+    }
+    tasks.named('jar') {
+        enabled = true
+    }
 }
+
+//project(":common-utils") {
+//    dependencies {
+//        implementation(project(":common-utils"))
+//    }
+//}
 
 bootJar.enabled = false

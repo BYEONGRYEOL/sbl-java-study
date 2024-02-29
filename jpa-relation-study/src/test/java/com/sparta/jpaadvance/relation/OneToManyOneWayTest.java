@@ -8,10 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Rollback;
 
-import com.sparta.jpaadvance.entity.OneToMany.OneWay.FoodOTMOneWayOwner;
-import com.sparta.jpaadvance.entity.OneToMany.OneWay.UserOTMOneWayDependent;
-import com.sparta.jpaadvance.repository.FoodOTMOneWayOwnerRepository;
-import com.sparta.jpaadvance.repository.UserOTMOneWayDependentRepository;
+import com.sparta.jpaadvance.entity.OwnerOTMOneWay;
+import com.sparta.jpaadvance.entity.D_OTMOneWay;
+import com.sparta.jpaadvance.repository.Owner_OTMOneWayOwnerRepository;
+import com.sparta.jpaadvance.repository.Dependent_OTMOneWayRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -22,19 +22,19 @@ public class OneToManyOneWayTest {
 	private final String FOOD_NAME = "foodName";
 	private final String USER_NAME = "username";
 	@Autowired
-	UserOTMOneWayDependentRepository userRepository;
+	Dependent_OTMOneWayRepository userRepository;
 	@Autowired
-	FoodOTMOneWayOwnerRepository foodRepository;
+	Owner_OTMOneWayOwnerRepository foodRepository;
 
 	@Test
 	@Rollback(value = false)
 	@DisplayName("1대N 단방향 테스트")
 	void test1() {
-		UserOTMOneWayDependent user = getUser();
+		D_OTMOneWay user = getUser();
 
-		UserOTMOneWayDependent user2 = getUser();
+		D_OTMOneWay user2 = getUser();
 
-		FoodOTMOneWayOwner food = getFood();
+		OwnerOTMOneWay food = getFood();
 
 		food.getUserList().add(user); // 외래 키(연관 관계) 설정
 		food.getUserList().add(user2); // 외래 키(연관 관계) 설정
@@ -49,20 +49,20 @@ public class OneToManyOneWayTest {
 	@Test
 	@DisplayName("1대N 조회 테스트")
 	void test2() {
-		FoodOTMOneWayOwner food = foodRepository.findById(1L).orElseThrow(NullPointerException::new);
+		OwnerOTMOneWay food = foodRepository.findById(1L).orElseThrow(NullPointerException::new);
 		System.out.println("food.getName() = " + food.getName());
 		// 해당 음식을 주문한 고객 정보 조회
-		List<UserOTMOneWayDependent> userList = food.getUserList();
-		for (UserOTMOneWayDependent user : userList) {
+		List<D_OTMOneWay> userList = food.getUserList();
+		for (D_OTMOneWay user : userList) {
 			System.out.println("user.getName() = " + user.getName());
 		}
 	}
 
-	FoodOTMOneWayOwner getFood() {
-		return new FoodOTMOneWayOwner(FOOD_NAME, 100);
+	OwnerOTMOneWay getFood() {
+		return new OwnerOTMOneWay(FOOD_NAME, 100);
 	}
 
-	UserOTMOneWayDependent getUser() {
-		return new UserOTMOneWayDependent(USER_NAME);
+	D_OTMOneWay getUser() {
+		return new D_OTMOneWay(USER_NAME);
 	}
 }

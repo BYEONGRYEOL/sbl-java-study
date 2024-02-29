@@ -1,15 +1,13 @@
 package com.sparta.jpaadvance.relation;
 
-import com.sparta.jpaadvance.entity.OneToOne.OneWay.FoodOTOOneWayOwner;
-import com.sparta.jpaadvance.entity.OneToOne.OneWay.UserOTOOneWayDependent;
-import com.sparta.jpaadvance.repository.FoodOTOOneWayOwnerRepository;
-import com.sparta.jpaadvance.repository.UserOTOOneWayDependentRepository;
+import com.sparta.jpaadvance.entity.OwnerOTOOneWay;
+import com.sparta.jpaadvance.entity.D_OTOOneWay;
+import com.sparta.jpaadvance.repository.Owner_OTOOneWayOwnerRepository;
+import com.sparta.jpaadvance.repository.Dependent_OTOOneWayRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,9 +21,9 @@ public class OneToOneOneWayTest {
     private final String USER_NAME = "username";
 
     @Autowired
-    FoodOTOOneWayOwnerRepository foodRepository;
+	Owner_OTOOneWayOwnerRepository foodRepository;
     @Autowired
-    UserOTOOneWayDependentRepository userRepository;
+    Dependent_OTOOneWayRepository userRepository;
 
 //    @Test
 //    void insertNullValueIntoNonNullColumnTest() {
@@ -42,8 +40,8 @@ public class OneToOneOneWayTest {
     @DisplayName("1대1 단방향 외래키 저장 성공 테스트")
     void oneToOneForiegnKeySuccessTest() {
 
-        UserOTOOneWayDependent user = getUser();
-        FoodOTOOneWayOwner food = getFood();
+        D_OTOOneWay user = getUser();
+        OwnerOTOOneWay food = getFood();
 
         // 외래 키의 주인인 Food Entity user 필드에 user 객체를 추가해 줍니다.
         food.setUser(user); // 외래 키(연관 관계) 설정
@@ -58,10 +56,10 @@ public class OneToOneOneWayTest {
     @DisplayName("1대1 단방향 외래키 저장 실패 테스트")
     void oneToOneForiegnKeyFailTest() {
 
-        UserOTOOneWayDependent user = getUser();
+        D_OTOOneWay user = getUser();
 
         // 외래 키의 주인인 Food Entity user 필드에 user 객체를 추가해 줍니다.
-        FoodOTOOneWayOwner food = getFood();
+        OwnerOTOOneWay food = getFood();
 
         // 어차피 save에는 Transactional 어노테이션이 달려있다.
         userRepository.save(user);
@@ -70,11 +68,11 @@ public class OneToOneOneWayTest {
 
 
 
-    FoodOTOOneWayOwner getFood() {
-        return new FoodOTOOneWayOwner(FOOD_NAME, 100);
+    OwnerOTOOneWay getFood() {
+        return new OwnerOTOOneWay(FOOD_NAME, 100);
     }
-    UserOTOOneWayDependent getUser(){
-        return new UserOTOOneWayDependent(USER_NAME);
+    D_OTOOneWay getUser(){
+        return new D_OTOOneWay(USER_NAME);
     }
 }
 
