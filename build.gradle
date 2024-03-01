@@ -23,8 +23,6 @@ subprojects {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
-        runtimeOnly 'com.h2database:h2'
-        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
         testAnnotationProcessor 'org.projectlombok:lombok'
@@ -44,11 +42,5 @@ subprojects {
         enabled = true
     }
 }
-
-//project(":common-utils") {
-//    dependencies {
-//        implementation(project(":common-utils"))
-//    }
-//}
 
 bootJar.enabled = false

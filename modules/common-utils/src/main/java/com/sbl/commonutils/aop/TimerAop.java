@@ -1,4 +1,4 @@
-package org.sbl;
+package com.sbl.commonutils.aop;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -12,7 +12,7 @@ import org.springframework.util.StopWatch;
 @Component
 public class TimerAop {
 
-	@Pointcut("@annotation(org.sbl.Timer)")
+	@Pointcut("@annotation(com.sbl.commonutils.aop.Timer)")
 	void cut() {
 	}
 

@@ -1,7 +1,8 @@
 rootProject.name = 'sbl-java-study'
-include 'jpa-relation-study'
-include 'jpa-advance-study'
-include 'webflux'
-include 'jackson-study'
-include 'unlabeled'
 
+include("modules:learn-by-test:jackson-study")
+include("modules:learn-by-test:jpa-advance-study")
+include("modules:learn-by-test:jpa-relation-study")
+include("modules:learn-by-test:unlabeled")
+include("modules:learn-by-test:webflux")
+include("modules:common-utils")

@@ -1,4 +1,4 @@
-package org.sbl;
+package com.sbl.commonutils.aop;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

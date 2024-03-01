@@ -9,19 +9,14 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/jackson-study" />
-            <option value="$PROJECT_DIR$/jpa-advance-study" />
-            <option value="$PROJECT_DIR$/jpa-relation-study" />
-            <option value="$PROJECT_DIR$/unlabeled" />
-            <option value="$PROJECT_DIR$/webflux" />
-          </set>
-        </option>
-      </GradleProjectSettings>
-      <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/common-utils" />
-        <option name="modules">
-          <set>
-            <option value="$PROJECT_DIR$/common-utils" />
+            <option value="$PROJECT_DIR$/modules" />
+            <option value="$PROJECT_DIR$/modules/common-utils" />
+            <option value="$PROJECT_DIR$/modules/learn-by-test" />
+            <option value="$PROJECT_DIR$/modules/learn-by-test/jackson-study" />
+            <option value="$PROJECT_DIR$/modules/learn-by-test/jpa-advance-study" />
+            <option value="$PROJECT_DIR$/modules/learn-by-test/jpa-relation-study" />
+            <option value="$PROJECT_DIR$/modules/learn-by-test/unlabeled" />
+            <option value="$PROJECT_DIR$/modules/learn-by-test/webflux" />
           </set>
         </option>
       </GradleProjectSettings>
